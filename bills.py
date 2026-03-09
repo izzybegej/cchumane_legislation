@@ -11,7 +11,6 @@
 #
 # SESSION REFERENCE:
 #   104th General Assembly (2025-2026) = current session
-#   103rd General Assembly (2023-2024) = previous session (bills are frozen/completed)
 
 
 # --- Session definitions ---
@@ -81,23 +80,6 @@ BILLS = [
     #     "bill_number": "????",
     #     **SESSION_104,
     # },
-
-
-    # ---- PREVIOUSLY TRACKED BILLS (103rd GA, 2023-2024) ----
-    # These sessions are over — statuses will show their final state.
-
-    {
-        "friendly_name": "HB3367 (103rd GA)",
-        "bill_type": "HB",
-        "bill_number": "3367",
-        **SESSION_103,
-    },
-    {
-        "friendly_name": "HB3322 (103rd GA)",
-        "bill_type": "HB",
-        "bill_number": "3322",
-        **SESSION_103,
-    },
 
 ]
 
