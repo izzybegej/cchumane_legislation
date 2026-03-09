@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Illinois Animal Welfare Legislation Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f9f6f0;
+      --warm-white: #fffdf9;
+      --ink: #1c1a17;
+      --muted: #6b6459;
+      --teal: #2a7a6f;
+      --teal-light: #e8f4f2;
+      --gold: #b07d3a;
+      --gold-light: #faf3e6;
+      --rule: #ddd7cd;
+      --pass: #2a6b3a;
+      --pass-bg: #eaf4ec;
+      --pending: #4a5e7a;
+      --pending-bg: #edf1f7;
+      --dead: #7a3a3a;
+      --dead-bg: #f7edec;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-weight: 300;
+      line-height: 1.7;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      max-width: 860px;
+      margin: 0 auto 2.5rem;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 1.25rem;
+    }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--ink);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    .meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    #last-updated {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Filters ── */
+    .filters {
+      max-width: 860px;
+      margin: 0 auto 1.75rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.78rem;
+      padding: 0.35rem 0.9rem;
+      border: 1px solid var(--rule);
+      border-radius: 2rem;
+      background: var(--warm-white);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.18s;
+      letter-spacing: 0.02em;
+    }
+
+    .filter-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .filter-btn.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    /* ── Bill Cards ── */
+    #bill-list {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .bill-card {
+      background: var(--warm-white);
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--teal);
+      border-radius: 2px;
+      padding: 1.4rem 1.6rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .bill-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+    .bill-card.session-103 { border-left-color: var(--rule); opacity: 0.85; }
+
+    .bill-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+
+    .bill-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+
+    .bill-id-tag {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--cream);
+      padding: 0.2rem 0.6rem;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      white-space: nowrap;
+      align-self: flex-start;
+      margin-top: 0.15rem;
+    }
+
+    .bill-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .bill-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 400;
+      padding: 0.2rem 0.65rem;
+      border-radius: 2rem;
+      letter-spacing: 0.03em;
+    }
+
+    .status-passed  { background: var(--pass-bg);    color: var(--pass);    border: 1px solid #b3d9bc; }
+    .status-pending { background: var(--pending-bg); color: var(--pending); border: 1px solid #b8c9de; }
+    .status-dead    { background: var(--dead-bg);    color: var(--dead);    border: 1px solid #d9b3b3; }
+
+    .synopsis {
+      font-size: 0.87rem;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    /* ── Expandable detail ── */
+    .detail-toggle {
+      font-size: 0.78rem;
+      color: var(--teal);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .detail-toggle:hover { text-decoration: underline; }
+    .arrow { display: inline-block; transition: transform 0.2s; font-style: normal; }
+    .detail-toggle.open .arrow { transform: rotate(90deg); }
+
+    .detail-panel {
+      display: none;
+      border-top: 1px solid var(--rule);
+      padding-top: 1rem;
+      margin-top: 0.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .detail-panel.visible { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.3rem;
+      font-style: normal;
+    }
+
+    .action-history {
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-left: 2px solid var(--rule);
+      padding-left: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .action-entry { display: flex; gap: 0.75rem; }
+    .action-date { color: var(--gold); white-space: nowrap; min-width: 90px; font-size: 0.75rem; }
+
+    .bill-links {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .bill-link {
+      font-size: 0.78rem;
+      color: var(--teal);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .bill-link:hover { border-bottom-color: var(--teal); }
+
+    .cosponsor-list {
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .cosponsor-chip {
+      background: var(--cream);
+      border: 1px solid var(--rule);
+      border-radius: 2rem;
+      padding: 0.15rem 0.55rem;
+      font-size: 0.75rem;
+    }
+
+    /* ── Loading / Error ── */
+    #loading, #error {
+      max-width: 860px;
+      margin: 3rem auto;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+    #error { color: var(--dead); }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid var(--rule);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ── */
+    footer {
+      max-width: 860px;
+      margin: 3rem auto 0;
+      border-top: 1px solid var(--rule);
+      padding-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    footer a { color: var(--teal); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="eyebrow">CU Humane Society · Legislative Watch</div>
+    <h1>Illinois Animal Welfare Bill Tracker</h1>
+    <p class="subtitle">Monitoring legislation that affects animals and the organizations that protect them.</p>
+    <div class="meta-bar">
+      <span id="last-updated">Loading data…</span>
+    </div>
+  </header>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">All Bills</button>
+    <button class="filter-btn" data-filter="104">104th GA (Current)</button>
+    <button class="filter-btn" data-filter="103">103rd GA (Past)</button>
+    <button class="filter-btn" data-filter="passed">Passed into Law</button>
+    <button class="filter-btn" data-filter="active">Active / Pending</button>
+  </div>
+
+  <div id="loading"><div class="spinner"></div>Fetching current bill data…</div>
+  <div id="error" style="display:none;"></div>
+  <div id="bill-list"></div>
+
+  <footer>
+    <span>Data sourced from <a href="https://ilga.gov" target="_blank">ILGA.gov</a> · Updated automatically each Monday.</span>
+    <span>CU Humane Society · <a href="https://cuhumane.org" target="_blank">cuhumane.org</a></span>
+  </footer>
+
+<script>
+  const DATA_URL = "https://izzybegej.github.io/cchumane_legislation/bills.json";
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  function statusClass(status) {
+    if (!status) return "status-pending";
+    const s = status.toLowerCase();
+    if (s.includes("public act") || s.includes("governor approved") || s.includes("signed")) return "status-passed";
+    if (s.includes("sine die") || s.includes("tabled") || s.includes("failed")) return "status-dead";
+    return "status-pending";
+  }
+
+  function statusLabel(status) {
+    if (!status) return "Status Unknown";
+    const s = status.toLowerCase();
+    if (s.includes("public act")) return "Signed into Law";
+    if (s.includes("governor approved")) return "Governor Approved";
+    if (s.includes("sine die")) return "Session Ended";
+    if (s.includes("tabled") || s.includes("failed")) return "Did Not Pass";
+    if (s.includes("referred")) return "In Committee";
+    if (s.includes("3rd reading") || s.includes("third reading")) return "Floor Vote Pending";
+    if (s.includes("2nd reading") || s.includes("second reading")) return "2nd Reading";
+    return "Active";
+  }
+
+  function parseActions(actionHistory) {
+    if (!actionHistory) return [];
+    return actionHistory.split(" | ").map(entry => {
+      // Each entry looks like: "2/6/2026 [House] Filed with the Clerk..."
+      const match = entry.match(/^(\S+)\s+\[(\w+)\]\s+(.+)$/);
+      if (match) return { date: match[1], chamber: match[2], text: match[3] };
+      return { date: "", chamber: "", text: entry };
+    });
+  }
+
+  function sessionKey(bill) {
+    return (bill.session || "").includes("103") ? "103" : "104";
+  }
+
+  // ── Render a single bill card ─────────────────────────────────────────────
+
+  function renderCard(bill) {
+    const sClass  = statusClass(bill.current_status);
+    const sLabel  = statusLabel(bill.current_status);
+    const session = sessionKey(bill);
+    const actions = parseActions(bill.action_history);
+    const cosponsors = bill.cosponsors
+      ? bill.cosponsors.split("|").map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const card = document.createElement("div");
+    card.className = `bill-card session-${session}`;
+    card.dataset.session = session;
+    card.dataset.status  = sClass;
+
+    card.innerHTML = `
+      <div class="bill-header">
+        <div class="bill-name">${bill.friendly_name || bill.bill_id}</div>
+        <div class="bill-id-tag">${bill.bill_id} · ${bill.session || ""}</div>
+      </div>
+
+      <div class="bill-meta">
+        <span>
+          <span class="status-badge ${sClass}">${sLabel}</span>
+        </span>
+        ${bill.primary_sponsor ? `<span>Sponsored by ${bill.primary_sponsor}${bill.sponsor_district && !bill.sponsor_district.includes("GA") ? ", " + bill.sponsor_district + " District" : ""}</span>` : ""}
+        ${bill.committee && session === "104" ? `<span>${bill.committee}</span>` : ""}
+        ${bill.status_date ? `<span>Last action: ${bill.status_date}</span>` : ""}
+      </div>
+
+      ${bill.synopsis ? `<p class="synopsis">${bill.synopsis.length > 280 ? bill.synopsis.slice(0, 280) + "…" : bill.synopsis}</p>` : ""}
+
+      <button class="detail-toggle" onclick="toggleDetail(this)">
+        <i class="arrow">▶</i> View full details
+      </button>
+
+      <div class="detail-panel">
+
+        ${bill.synopsis && bill.synopsis.length > 280 ? `
+        <div class="detail-section">
+          <div class="detail-label">Full Summary</div>
+          <p style="font-size:0.85rem; color:var(--muted); line-height:1.7;">${bill.synopsis}</p>
+        </div>` : ""}
+
+        ${cosponsors.length > 0 ? `
+        <div class="detail-section">
+          <div class="detail-label">Co-Sponsors (${cosponsors.length})</div>
+          <div class="cosponsor-list">
+            ${cosponsors.map(c => `<span class="cosponsor-chip">${c}</span>`).join("")}
+          </div>
+        </div>` : ""}
+
+        ${actions.length > 0 ? `
+        <div class="detail-section">
+          <div class="detail-label">Action History</div>
+          <div class="action-history">
+            ${actions.map(a => `
+              <div class="action-entry">
+                <span class="action-date">${a.date}</span>
+                <span>${a.chamber ? "[" + a.chamber + "] " : ""}${a.text}</span>
+              </div>`).join("")}
+          </div>
+        </div>` : ""}
+
+        <div class="bill-links">
+          ${bill.bill_page_url ? `<a class="bill-link" href="${bill.bill_page_url}" target="_blank">→ Bill Status Page</a>` : ""}
+          ${bill.fulltext_url  ? `<a class="bill-link" href="${bill.fulltext_url}"  target="_blank">→ Full Text</a>` : ""}
+          ${bill.schedule_url  ? `<a class="bill-link" href="${bill.schedule_url}"  target="_blank">→ Hearing Schedule</a>` : ""}
+          ${bill.committee_url && bill.committee ? `<a class="bill-link" href="${bill.committee_url}" target="_blank">→ ${bill.committee} Members</a>` : ""}
+        </div>
+
+      </div>
+    `;
+
+    return card;
+  }
+
+  // ── Toggle detail panel ───────────────────────────────────────────────────
+
+  function toggleDetail(btn) {
+    const panel = btn.nextElementSibling;
+    const isOpen = panel.classList.contains("visible");
+    panel.classList.toggle("visible", !isOpen);
+    btn.classList.toggle("open", !isOpen);
+    btn.childNodes[1].textContent = isOpen ? " View full details" : " Hide details";
+  }
+
+  // ── Filter buttons ────────────────────────────────────────────────────────
+
+  let allBills = [];
+
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const f = btn.dataset.filter;
+      renderList(filterBills(allBills, f));
+    });
+  });
+
+  function filterBills(bills, filter) {
+    if (filter === "all")    return bills;
+    if (filter === "104")    return bills.filter(b => sessionKey(b) === "104");
+    if (filter === "103")    return bills.filter(b => sessionKey(b) === "103");
+    if (filter === "passed") return bills.filter(b => statusClass(b.current_status) === "status-passed");
+    if (filter === "active") return bills.filter(b => statusClass(b.current_status) === "status-pending");
+    return bills;
+  }
+
+  function renderList(bills) {
+    const list = document.getElementById("bill-list");
+    list.innerHTML = "";
+    if (bills.length === 0) {
+      list.innerHTML = `<p style="text-align:center;color:var(--muted);font-style:italic;">No bills match this filter.</p>`;
+      return;
+    }
+    bills.forEach((bill, i) => {
+      const card = renderCard(bill);
+      card.style.animationDelay = `${i * 0.04}s`;
+      list.appendChild(card);
+    });
+  }
+
+  // ── Fetch data ────────────────────────────────────────────────────────────
+
+  async function loadBills() {
+    try {
+      const res = await fetch(DATA_URL);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      allBills = await res.json();
+
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("last-updated").textContent =
+        `${allBills.length} bills tracked · Data refreshes automatically each Monday`;
+
+      renderList(allBills);
+    } catch (err) {
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("error").style.display  = "block";
+      document.getElementById("error").textContent =
+        "Could not load bill data. Please try refreshing the page. (" + err.message + ")";
+    }
+  }
+
+  loadBills();
+</script>
+</body>
+</html>
