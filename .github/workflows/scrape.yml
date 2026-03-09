@@ -1,0 +1,86 @@
+# .github/workflows/scrape.yml
+# -----------------------------
+# This file tells GitHub to run the bill scraper automatically.
+# It runs on a schedule AND whenever you manually trigger it.
+#
+# YAML format note: indentation (spaces) is meaningful here.
+# Do not use tabs — use spaces only.
+
+name: Scrape Illinois Bills
+
+on:
+  # Run automatically every Monday at 9am Central time
+  # GitHub uses UTC, so 9am Central = 15:00 UTC
+  schedule:
+    - cron: '0 15 * * 1'
+
+  # Also allows you to run it manually from GitHub's website
+  # (useful for testing and for when a bill changes mid-week)
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    # Use a free GitHub cloud computer running Ubuntu Linux
+    runs-on: ubuntu-latest
+
+    # Grant permission to write files back to the repo
+    permissions:
+      contents: write
+
+    steps:
+      # Step 1: Download your repo's files onto the cloud computer
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install the libraries listed in requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Step 4: Run your scraper
+      # We call scrape_all_bills() and save the result as bills.json
+      - name: Run scraper
+        run: |
+          python - <<'EOF'
+          import json
+          from scraper import scrape_all_bills
+
+          print("Starting scheduled scrape...")
+          results = scrape_all_bills()
+
+          # Save as JSON for the website widget to read
+          # The 'docs' folder is where GitHub Pages serves files from
+          import os
+          os.makedirs("docs", exist_ok=True)
+
+          with open("docs/bills.json", "w") as f:
+              json.dump(results, f, indent=2, default=str)
+
+          print(f"Saved {len(results)} bills to docs/bills.json")
+          EOF
+
+      # Step 5: Commit the updated bills.json back to the repo
+      # so GitHub Pages serves the fresh data
+      - name: Commit updated data
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add docs/bills.json
+          git diff --staged --quiet || git commit -m "Auto-update bills data"
+          git push
+```
+
+4. Commit with message: `Add GitHub Actions workflow`
+
+---
+
+## Step 6 — Enable GitHub Pages
+
+GitHub Pages turns your repo's `docs/` folder into a public website. After the scraper runs, `docs/bills.json` will be accessible at a URL like:
+```
+https://YOUR-USERNAME.github.io/il-animal-welfare-tracker/bills.json
